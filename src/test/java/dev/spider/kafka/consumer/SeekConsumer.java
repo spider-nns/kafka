@@ -20,7 +20,6 @@ public class SeekConsumer {
     private static final String topic = "topic-demo";
     private static final String groupId = "group.demo";
 
-    private Properties properties;
 
     @BeforeAll
     public Properties initConfig() {
@@ -28,17 +27,16 @@ public class SeekConsumer {
         properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
         properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, CompanyDeserializer.class.getName());
-        properties.put(ConsumerConfig.GROUP_ID_CONFIG, "group-demo");
+        properties.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         properties.put(ConsumerConfig.CLIENT_ID_CONFIG, "producer.client.id.demo");
-        this.properties = properties;
         return properties;
     }
 
     @Test
-    public void seek(String[] args) {
+    public void seek() {
         KafkaConsumer consumer = new KafkaConsumer<String, String>(initConfig());
         Map<TopicPartition, OffsetAndMetadata> currentOffset = new HashMap<>();
-        consumer.subscribe(Arrays.asList(brokerList), new ConsumerRebalanceListener() {
+        consumer.subscribe(Arrays.asList(topic), new ConsumerRebalanceListener() {
             /**
              * 在再均衡开始之前和消费者停止读取消息之后被调用
              * 可以处理消费位移的提交避免一些不必要的重复消费发生
@@ -101,12 +99,12 @@ public class SeekConsumer {
                 for (ConsumerRecord<String, String> record : records) {
                     currentOffset.put(new TopicPartition(record.topic(), record.partition()), new OffsetAndMetadata(record.offset() + 1));
                 }
-                consumer.commitAsync(currentOffset,null);
+                consumer.commitAsync(currentOffset, null);
 
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             consumer.close();
         }
 
